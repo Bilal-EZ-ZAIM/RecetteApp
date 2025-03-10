@@ -1,4 +1,4 @@
-// src/store/recipeSlice.ts
+
 import {createSlice, PayloadAction, createAsyncThunk} from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -30,7 +30,6 @@ const initialState: RecipeState = {
   error: null,
 };
 
-// Async thunks for handling favorites with AsyncStorage
 export const fetchFavorites = createAsyncThunk(
   'recipes/fetchFavorites',
   async () => {
