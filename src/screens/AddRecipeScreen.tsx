@@ -56,7 +56,6 @@ const AddRecipeScreen = () => {
       setRecipes(newRecipes);
       Alert.alert('Succès', 'Recette ajoutée avec succès.');
 
-      // تفريغ الحقول بعد الحفظ
       setRecipe({
         name: '',
         ingredients: '',
