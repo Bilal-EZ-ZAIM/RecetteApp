@@ -96,8 +96,6 @@ const HomeScreen: React.FC = () => {
       dispatch(setLoading(true));
       dispatch(setError(null));
 
-      // If category is specified, fetch recipes by category
-      // Otherwise, fetch Italian recipes
       const endpoint = category
         ? `${API_URL}/filter.php?c=${category}`
         : `${API_URL}/filter.php?a=Italian`;
@@ -115,7 +113,6 @@ const HomeScreen: React.FC = () => {
         return;
       }
 
-      // Get detailed information for each recipe
       const detailedRecipes = await Promise.all(
         data.meals.map(async (meal: any) => {
           const detailResponse = await fetch(
@@ -128,11 +125,9 @@ const HomeScreen: React.FC = () => {
         }),
       );
 
-      // Transform the API response to match our Recipe interface
       const transformedRecipes = detailedRecipes
         .filter(Boolean)
         .map((recipe: any) => {
-          // Calculate approximate preparation time based on recipe complexity
           const ingredients = Object.keys(recipe).filter(
             key => key.startsWith('strIngredient') && recipe[key],
           ).length;
