@@ -65,14 +65,12 @@ const HomeScreen: React.FC = () => {
     useAppSelector(state => state.recipes);
   const [apiCategories, setApiCategories] = useState<string[]>([]);
 
-  // Fetch categories and initial recipes from API
   useEffect(() => {
     fetchCategories();
     fetchRecipes();
     dispatch(fetchFavorites());
   }, []);
 
-  // Fetch available categories from the API
   const fetchCategories = async () => {
     try {
       const response = await fetch(`${API_URL}/categories.php`);
@@ -90,7 +88,6 @@ const HomeScreen: React.FC = () => {
     }
   };
 
-  // Fetch recipes from TheMealDB API
   const fetchRecipes = async (category?: string) => {
     try {
       dispatch(setLoading(true));
