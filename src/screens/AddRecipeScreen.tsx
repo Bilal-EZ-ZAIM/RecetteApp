@@ -1,203 +1,186 @@
-import React, { useState } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
   TextInput,
-  ScrollView,
   TouchableOpacity,
   StyleSheet,
   Alert,
+  ScrollView,
+  FlatList,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../navigation/AppNavigator';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'AddRecipe'>;
+const AddRecipeScreen = () => {
+  const [recipe, setRecipe] = useState({
+    name: '',
+    ingredients: '',
+    steps: '',
+    category: '',
+    preparationTime: '',
+    difficulty: '',
+  });
 
-const AddRecipeScreen: React.FC<Props> = ({ navigation }) => {
-  const [name, setName] = useState('');
-  const [ingredients, setIngredients] = useState('');
-  const [instructions, setInstructions] = useState('');
-  const [prepTime, setPrepTime] = useState('');
-  const [difficulty, setDifficulty] = useState('Facile');
+  const [recipes, setRecipes] = useState([]);
 
-  const difficulties = ['Facile', 'Moyen', 'Difficile'];
+  useEffect(() => {
+    loadRecipes();
+  }, []);
 
-  const saveRecipe = async () => {
-    if (!name.trim() || !ingredients.trim() || !instructions.trim() || !prepTime.trim()) {
-      Alert.alert('Erreur', 'Veuillez remplir tous les champs obligatoires');
+  const loadRecipes = async () => {
+    try {
+      const storedRecipes = await AsyncStorage.getItem('recipes');
+      if (storedRecipes) {
+        setRecipes(JSON.parse(storedRecipes));
+      }
+    } catch (error) {
+      console.error('Erreur de chargement des recettes:', error);
+    }
+  };
+
+  const handleSaveRecipe = async () => {
+    if (
+      !recipe.name ||
+      !recipe.ingredients ||
+      !recipe.steps ||
+      !recipe.category
+    ) {
+      Alert.alert('Erreur', 'Veuillez remplir tous les champs.');
       return;
     }
 
+    const newRecipes = [...recipes, recipe];
+
     try {
-      const newRecipe = {
-        id: Date.now().toString(),
-        name,
-        ingredients: ingredients.split('\n'),
-        instructions,
-        prepTime: parseInt(prepTime),
-        difficulty,
-        createdAt: new Date().toISOString(),
-      };
+      await AsyncStorage.setItem('recipes', JSON.stringify(newRecipes));
+      setRecipes(newRecipes);
+      Alert.alert('Succès', 'Recette ajoutée avec succès.');
 
-      const existingRecipes = await AsyncStorage.getItem('customRecipes');
-      const recipes = existingRecipes ? JSON.parse(existingRecipes) : [];
-      recipes.push(newRecipe);
-
-      await AsyncStorage.setItem('customRecipes', JSON.stringify(recipes));
-      Alert.alert('Succès', 'Recette ajoutée avec succès', [
-        { text: 'OK', onPress: () => navigation.goBack() },
-      ]);
+      // تفريغ الحقول بعد الحفظ
+      setRecipe({
+        name: '',
+        ingredients: '',
+        steps: '',
+        category: '',
+        preparationTime: '',
+        difficulty: '',
+      });
     } catch (error) {
-      console.error(error);
-      Alert.alert('Erreur', "Impossible d'enregistrer la recette");
+      console.error("Erreur lors de l'enregistrement:", error);
+    }
+  };
+
+  const handleDeleteRecipe = async index => {
+    const updatedRecipes = recipes.filter((_, i) => i !== index);
+    try {
+      await AsyncStorage.setItem('recipes', JSON.stringify(updatedRecipes));
+      setRecipes(updatedRecipes);
+      Alert.alert('Succès', 'Recette supprimée avec succès.');
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
     }
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.form}>
-        <View style={styles.field}>
-          <Text style={styles.label}>Nom de la recette *</Text>
-          <TextInput
-            style={styles.input}
-            value={name}
-            onChangeText={setName}
-            placeholder="Ex: Spaghetti Carbonara"
-          />
-        </View>
+    <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <View style={styles.container}>
+        <Text style={styles.label}>Nom de la recette:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Nom de la recette"
+          value={recipe.name}
+          onChangeText={text => setRecipe({...recipe, name: text})}
+        />
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Ingrédients *</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={ingredients}
-            onChangeText={setIngredients}
-            placeholder="Un ingrédient par ligne"
-            multiline
-            numberOfLines={4}
-          />
-        </View>
+        <Text style={styles.label}>Ingrédients:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ex: 2 œufs, 200g de farine..."
+          value={recipe.ingredients}
+          onChangeText={text => setRecipe({...recipe, ingredients: text})}
+          multiline
+        />
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Instructions *</Text>
-          <TextInput
-            style={[styles.input, styles.textArea]}
-            value={instructions}
-            onChangeText={setInstructions}
-            placeholder="Étapes de préparation"
-            multiline
-            numberOfLines={6}
-          />
-        </View>
+        <Text style={styles.label}>Étapes:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Expliquer les étapes de préparation..."
+          value={recipe.steps}
+          onChangeText={text => setRecipe({...recipe, steps: text})}
+          multiline
+        />
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Temps de préparation (minutes) *</Text>
-          <TextInput
-            style={styles.input}
-            value={prepTime}
-            onChangeText={setPrepTime}
-            placeholder="Ex: 30"
-            keyboardType="numeric"
-          />
-        </View>
+        <Text style={styles.label}>Catégorie:</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Ex: Pizza, Desserts..."
+          value={recipe.category}
+          onChangeText={text => setRecipe({...recipe, category: text})}
+        />
 
-        <View style={styles.field}>
-          <Text style={styles.label}>Difficulté</Text>
-          <View style={styles.difficultyContainer}>
-            {difficulties.map((diff) => (
-              <TouchableOpacity
-                key={diff}
-                style={[
-                  styles.difficultyButton,
-                  difficulty === diff && styles.difficultyButtonActive,
-                ]}
-                onPress={() => setDifficulty(diff)}>
-                <Text
-                  style={[
-                    styles.difficultyButtonText,
-                    difficulty === diff && styles.difficultyButtonTextActive,
-                  ]}>
-                  {diff}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.submitButton} onPress={saveRecipe}>
-          <Text style={styles.submitButtonText}>Ajouter la recette</Text>
+        <TouchableOpacity style={styles.button} onPress={handleSaveRecipe}>
+          <Text style={styles.buttonText}>Enregistrer la recette</Text>
         </TouchableOpacity>
+
+        <Text style={styles.title}>📌 Liste des recettes</Text>
+        <FlatList
+          data={recipes}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({item, index}) => (
+            <View style={styles.recipeCard}>
+              <Text style={styles.recipeName}>{item.name}</Text>
+              <Text style={styles.recipeCategory}>
+                Catégorie: {item.category}
+              </Text>
+              <TouchableOpacity
+                style={styles.deleteButton}
+                onPress={() => handleDeleteRecipe(index)}>
+                <Text style={styles.deleteButtonText}>Supprimer</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        />
       </View>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  form: {
-    padding: 16,
-  },
-  field: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
+  scrollContainer: {flexGrow: 1, paddingBottom: 20},
+  container: {flex: 1, padding: 20, backgroundColor: '#fff'},
+  label: {fontSize: 16, fontWeight: 'bold', marginTop: 10},
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#ccc',
+    padding: 10,
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#333',
+    marginTop: 5,
   },
-  textArea: {
-    height: 120,
-    textAlignVertical: 'top',
-  },
-  difficultyContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  difficultyButton: {
-    flex: 1,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    marginHorizontal: 4,
-    alignItems: 'center',
-  },
-  difficultyButtonActive: {
+  button: {
     backgroundColor: '#DC2626',
-    borderColor: '#DC2626',
-  },
-  difficultyButtonText: {
-    color: '#666',
-    fontWeight: '500',
-  },
-  difficultyButtonTextActive: {
-    color: '#fff',
-  },
-  submitButton: {
-    backgroundColor: '#DC2626',
-    padding: 16,
+    padding: 15,
     borderRadius: 8,
     alignItems: 'center',
     marginTop: 20,
   },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  buttonText: {color: '#fff', fontSize: 16, fontWeight: 'bold'},
+  title: {fontSize: 18, fontWeight: 'bold', marginTop: 20},
+  recipeCard: {
+    backgroundColor: '#f8f8f8',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 10,
   },
+  recipeName: {fontSize: 16, fontWeight: 'bold'},
+  recipeCategory: {fontSize: 14, color: '#555'},
+  deleteButton: {
+    marginTop: 10,
+    backgroundColor: '#DC2626',
+    padding: 8,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  deleteButtonText: {color: '#fff', fontSize: 14, fontWeight: 'bold'},
 });
 
 export default AddRecipeScreen;

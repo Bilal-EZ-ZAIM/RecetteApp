@@ -19,7 +19,7 @@ const FavoritesScreen = ({ navigation }: any) => {
 
   useEffect(() => {
     // Load favorites when component mounts
-    dispatch(fetchFavorites());
+  dispatch(fetchFavorites());
   }, [dispatch]);
 
   const removeFavorite = (recipe: any) => {

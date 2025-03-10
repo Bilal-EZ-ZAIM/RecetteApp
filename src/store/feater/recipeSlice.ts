@@ -1,5 +1,5 @@
 // src/store/recipeSlice.ts
-import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import {createSlice, PayloadAction, createAsyncThunk} from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface Recipe {
@@ -41,27 +41,41 @@ export const fetchFavorites = createAsyncThunk(
       console.error('Error fetching favorites:', error);
       return [];
     }
-  }
+  },
 );
 
 export const toggleFavorite = createAsyncThunk(
   'recipes/toggleFavorite',
-  async (recipe: Recipe, { getState }) => {
-    const { recipes } = getState() as { recipes: RecipeState };
+  async (recipe: Recipe, {getState}) => {
+    const {recipes} = getState() as {recipes: RecipeState};
     const currentFavorites = [...recipes.favorites];
-    
+
     const isFavorite = currentFavorites.some(fav => fav.id === recipe.id);
     let newFavorites: Recipe[];
-    
+
     if (isFavorite) {
       newFavorites = currentFavorites.filter(fav => fav.id !== recipe.id);
     } else {
       newFavorites = [...currentFavorites, recipe];
     }
-    
+
     await AsyncStorage.setItem('favorites', JSON.stringify(newFavorites));
     return newFavorites;
-  }
+  },
+);
+
+export const addRecipe = createAsyncThunk(
+  'recipes/addRecipe',
+  async (recipe: Recipe, {getState}) => {
+    const {recipes} = getState() as {recipes: RecipeState};
+    const newRecipes = [
+      ...recipes.recipes,
+      {...recipe, id: Date.now().toString()},
+    ];
+
+    await AsyncStorage.setItem('recipes', JSON.stringify(newRecipes));
+    return newRecipes;
+  },
 );
 
 const recipeSlice = createSlice({
@@ -84,7 +98,7 @@ const recipeSlice = createSlice({
       state.error = action.payload;
     },
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
       .addCase(fetchFavorites.fulfilled, (state, action) => {
         state.favorites = action.payload;
@@ -92,6 +106,10 @@ const recipeSlice = createSlice({
       .addCase(toggleFavorite.fulfilled, (state, action) => {
         state.favorites = action.payload;
       });
+
+    builder.addCase(addRecipe.fulfilled, (state, action) => {
+      state.recipes = action.payload;
+    });
   },
 });
 
