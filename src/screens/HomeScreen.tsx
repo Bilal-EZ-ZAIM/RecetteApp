@@ -22,15 +22,45 @@ import {
   fetchFavorites,
 } from '../store/feater/recipeSlice';
 import RecipeCard from './RecipeCard';
+import {NativeStackNavigationProp} from '@react-navigation/native-stack';
+
+// Define the navigation param list types
+type RootStackParamList = {
+  Home: undefined;
+  RecipeDetails: {recipeId: string};
+};
+
+type HomeScreenProps = {
+  navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
+};
 
 // Using TheMealDB API which is completely free to use
 const API_URL = 'https://www.themealdb.com/api/json/v1/1';
 
+// Define recipe interface
+interface Recipe {
+  id: string;
+  name: string;
+  image: string;
+  description: string;
+  preparationTime: number;
+  difficulty: string;
+  category: string;
+}
+
+// Define API meal interface
+interface ApiMeal {
+  idMeal: string;
+  strMeal: string;
+  strMealThumb: string;
+  strInstructions: string;
+  strCategory: string;
+  [key: string]: any; // For dynamic properties like strIngredient1, etc.
+}
+
 const categories = [
   'Tout',
   'Pâtes',
-  'Pizza',
-  'Riz',
   'Desserts',
   'Salades',
   'Soupes',
@@ -42,8 +72,6 @@ const categories = [
 // Mapping from TheMealDB categories to our French categories
 const categoryMapping: {[key: string]: string} = {
   Pasta: 'Pâtes',
-  Pizza: 'Pizza',
-  Rice: 'Riz',
   Dessert: 'Desserts',
   Side: 'Accompagnements',
   Starter: 'Entrées',
@@ -59,7 +87,7 @@ const categoryMapping: {[key: string]: string} = {
   Miscellaneous: 'Autre',
 };
 
-const HomeScreen: React.FC = () => {
+const HomeScreen: React.FC<HomeScreenProps> = ({navigation}) => {
   const dispatch = useAppDispatch();
   const {recipes, selectedCategory, searchQuery, loading, error} =
     useAppSelector(state => state.recipes);
@@ -71,7 +99,7 @@ const HomeScreen: React.FC = () => {
     dispatch(fetchFavorites());
   }, []);
 
-  const fetchCategories = async () => {
+  const fetchCategories = async (): Promise<void> => {
     try {
       const response = await fetch(`${API_URL}/categories.php`);
 
@@ -88,7 +116,7 @@ const HomeScreen: React.FC = () => {
     }
   };
 
-  const fetchRecipes = async (category?: string) => {
+  const fetchRecipes = async (category?: string): Promise<void> => {
     try {
       dispatch(setLoading(true));
       dispatch(setError(null));
@@ -111,20 +139,25 @@ const HomeScreen: React.FC = () => {
       }
 
       const detailedRecipes = await Promise.all(
-        data.meals.map(async (meal: any) => {
-          const detailResponse = await fetch(
-            `${API_URL}/lookup.php?i=${meal.idMeal}`,
-          );
-          if (!detailResponse.ok) return null;
+        data.meals.map(async (meal: {idMeal: string}) => {
+          try {
+            const detailResponse = await fetch(
+              `${API_URL}/lookup.php?i=${meal.idMeal}`,
+            );
+            if (!detailResponse.ok) return null;
 
-          const detailData = await detailResponse.json();
-          return detailData.meals ? detailData.meals[0] : null;
+            const detailData = await detailResponse.json();
+            return detailData.meals ? detailData.meals[0] : null;
+          } catch (error) {
+            console.error(`Error fetching recipe details for ${meal.idMeal}:`, error);
+            return null;
+          }
         }),
       );
 
       const transformedRecipes = detailedRecipes
         .filter(Boolean)
-        .map((recipe: any) => {
+        .map((recipe: ApiMeal) => {
           const ingredients = Object.keys(recipe).filter(
             key => key.startsWith('strIngredient') && recipe[key],
           ).length;
@@ -179,7 +212,7 @@ const HomeScreen: React.FC = () => {
   };
 
   // Handle category change
-  const handleCategoryChange = (category: string) => {
+  const handleCategoryChange = (category: string): void => {
     dispatch(setSelectedCategory(category));
 
     if (category !== 'Tout') {
@@ -198,7 +231,7 @@ const HomeScreen: React.FC = () => {
   };
 
   // Filter recipes based on search
-  const filteredRecipes = recipes.filter(recipe => {
+  const filteredRecipes = recipes.filter((recipe: Recipe) => {
     const matchesSearch =
       searchQuery.length === 0 ||
       recipe.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -206,10 +239,9 @@ const HomeScreen: React.FC = () => {
   });
 
   // Handle recipe selection
-  const handleRecipePress = recipe => {
+  const handleRecipePress = (recipe: Recipe): void => {
     // Navigate to recipe details screen
-    // This would be implemented with React Navigation
-    console.log('Recipe selected:', recipe.name);
+    navigation.navigate('RecipeDetails', {recipeId: recipe.id});
   };
 
   // Render error state
@@ -289,7 +321,7 @@ const HomeScreen: React.FC = () => {
       ) : (
         <FlatList
           data={filteredRecipes}
-          renderItem={({item, index}) => (
+          renderItem={({item, index}: {item: Recipe; index: number}) => (
             <RecipeCard
               recipe={item}
               index={index}
@@ -404,71 +436,6 @@ const styles = StyleSheet.create({
   list: {
     padding: 16,
     paddingTop: 8,
-  },
-  card: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    overflow: 'hidden',
-  },
-  image: {
-    width: '100%',
-    height: 200,
-  },
-  cardContent: {
-    padding: 16,
-  },
-  categoryBadge: {
-    backgroundColor: '#f5f5f5',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-  },
-  categoryText: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: '#333',
-  },
-  description: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  footerItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 4,
-    fontWeight: '500',
-  },
-  favoriteButton: {
-    padding: 4,
   },
   loadingContainer: {
     flex: 1,

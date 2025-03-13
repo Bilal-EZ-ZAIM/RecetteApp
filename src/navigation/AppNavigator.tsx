@@ -5,7 +5,8 @@ import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import HomeScreen from '../screens/HomeScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import AddRecipeScreen from '../screens/AddRecipeScreen';
-import Icon from 'react-native-vector-icons/MaterialIcons';
+import RecipeDetailScreen from '../screens/RecipeDetailScreen';
+import {Text} from 'react-native';
 
 export type RootStackParamList = {
   Home: undefined;
@@ -36,6 +37,15 @@ const HomeStack = () => {
         component={HomeScreen}
         options={{title: 'Pepe Nero'}}
       />
+      <Stack.Screen
+        name="RecipeDetails"
+        component={RecipeDetailScreen}
+        options={({route}) => ({
+          title: '', // سيتم تعيين العنوان بشكل ديناميكي في الشاشة نفسها
+          headerTransparent: true,
+          headerShown: true,
+        })}
+      />
     </Stack.Navigator>
   );
 };
@@ -50,14 +60,14 @@ const AppNavigator = () => {
             let iconName = '';
 
             if (route.name === 'Home') {
-              iconName = 'home';
+              iconName = '🏠';
             } else if (route.name === 'Favorites') {
-              iconName = 'favorite';
+              iconName = '❤️';
             } else if (route.name === 'AddRecipe') {
-              iconName = 'add-circle';
+              iconName = '➕';
             }
 
-            return <Icon name={iconName} size={size} color={color} />;
+            return <Text style={{fontSize: size, color}}>{iconName}</Text>;
           },
           tabBarActiveTintColor: '#DC2626',
           tabBarInactiveTintColor: 'gray',

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
 import {
   View,
   Text,
@@ -8,29 +8,27 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchFavorites, toggleFavorite } from '../store/feater/recipeSlice';
-import { RootState } from '../store/store'; // Assuming you have a store with rootReducer
+import {useDispatch, useSelector} from 'react-redux';
+import {fetchFavorites, toggleFavorite} from '../store/feater/recipeSlice';
+import {RootState} from '../store/store'; 
 
-const FavoritesScreen = ({ navigation }: any) => {
+const FavoritesScreen = ({navigation}: any) => {
   const dispatch = useDispatch();
-  const { favorites, loading } = useSelector((state: RootState) => state.recipes);
+  const {favorites, loading} = useSelector((state: RootState) => state.recipes);
 
   useEffect(() => {
-    // Load favorites when component mounts
-  dispatch(fetchFavorites());
+    dispatch(fetchFavorites());
   }, [dispatch]);
 
   const removeFavorite = (recipe: any) => {
     dispatch(toggleFavorite(recipe));
   };
 
-  const renderRecipeCard = ({ item }: any) => (
+  const renderRecipeCard = ({item}: any) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() => navigation.navigate('RecipeDetail', { recipeId: item.id })}>
-      <Image source={{ uri: item.image }} style={styles.cardImage} />
+      onPress={() => navigation.navigate('RecipeDetail', {recipeId: item.id})}>
+      <Image source={{uri: item.image}} style={styles.cardImage} />
       <View style={styles.cardContent}>
         <Text style={styles.cardTitle} numberOfLines={2}>
           {item.name}
@@ -38,7 +36,7 @@ const FavoritesScreen = ({ navigation }: any) => {
         <TouchableOpacity
           style={styles.removeButton}
           onPress={() => removeFavorite(item)}>
-          <Icon name="heart" size={24} color="#DC2626" />
+          <Text style={{fontSize: 24, color: '#DC2626'}}>❤️</Text>
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -55,7 +53,7 @@ const FavoritesScreen = ({ navigation }: any) => {
   if (favorites.length === 0) {
     return (
       <View style={styles.centerContainer}>
-        <Icon name="heart-outline" size={64} color="#ccc" />
+        <Text style={{fontSize: 64, color: '#ccc'}}>🤍</Text>
         <Text style={styles.emptyText}>
           Vous n'avez pas encore de recettes favorites
         </Text>

@@ -12,12 +12,32 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
+
+type RecipeDetailScreenProps = NativeStackScreenProps<RootStackParamList, 'RecipeDetails'>;
 
 const API_URL = 'https://www.themealdb.com/api/json/v1/1';
 
-const RecipeDetailScreen = ({ route, navigation }) => {
+interface Ingredient {
+  ingredient: string;
+  measure: string;
+}
+
+interface Recipe {
+  id: string;
+  name: string;
+  category: string;
+  area: string;
+  instructions: string[];
+  ingredients: Ingredient[];
+  image: string;
+  video: string;
+}
+
+const RecipeDetailScreen = ({ route, navigation }: RecipeDetailScreenProps) => {
   const { recipeId } = route.params;
-  const [recipe, setRecipe] = useState(null);
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFavorite, setIsFavorite] = useState(false);
   const scrollY = new Animated.Value(0);
@@ -41,8 +61,8 @@ const RecipeDetailScreen = ({ route, navigation }) => {
     }
   };
 
-  const transformRecipeData = (rawRecipe) => {
-    const ingredients = [];
+  const transformRecipeData = (rawRecipe: any): Recipe => {
+    const ingredients: Ingredient[] = [];
     for (let i = 1; i <= 20; i++) {
       const ingredient = rawRecipe[`strIngredient${i}`];
       const measure = rawRecipe[`strMeasure${i}`];
@@ -53,8 +73,8 @@ const RecipeDetailScreen = ({ route, navigation }) => {
 
     const steps = rawRecipe.strInstructions
       .split('.')
-      .filter(step => step.trim())
-      .map(step => step.trim());
+      .filter((step: string) => step.trim())
+      .map((step: string) => step.trim());
 
     return {
       id: rawRecipe.idMeal,
@@ -73,7 +93,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
       const favorites = await AsyncStorage.getItem('favorites');
       if (favorites) {
         const favoritesArray = JSON.parse(favorites);
-        setIsFavorite(favoritesArray.some(fav => fav.id === recipeId));
+        setIsFavorite(favoritesArray.some((fav: Recipe) => fav.id === recipeId));
       }
     } catch (error) {
       console.error('Error checking favorite status:', error);
@@ -81,12 +101,14 @@ const RecipeDetailScreen = ({ route, navigation }) => {
   };
 
   const toggleFavorite = async () => {
+    if (!recipe) return;
+    
     try {
       const favorites = await AsyncStorage.getItem('favorites');
-      let favoritesArray = favorites ? JSON.parse(favorites) : [];
+      let favoritesArray: Recipe[] = favorites ? JSON.parse(favorites) : [];
       
       if (isFavorite) {
-        favoritesArray = favoritesArray.filter(fav => fav.id !== recipeId);
+        favoritesArray = favoritesArray.filter((fav: Recipe) => fav.id !== recipeId);
       } else {
         favoritesArray.push(recipe);
       }
@@ -99,6 +121,8 @@ const RecipeDetailScreen = ({ route, navigation }) => {
   };
 
   const shareRecipe = async () => {
+    if (!recipe) return;
+    
     try {
       await Share.share({
         message: `Découvrez cette délicieuse recette de ${recipe.name}!`,
@@ -132,7 +156,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
   });
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       <Animated.View style={[styles.header, { opacity: headerOpacity }]}>
         <Text style={styles.headerTitle} numberOfLines={1}>
           {recipe.name}
@@ -200,7 +224,7 @@ const RecipeDetailScreen = ({ route, navigation }) => {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </ScrollView>
   );
 };
 

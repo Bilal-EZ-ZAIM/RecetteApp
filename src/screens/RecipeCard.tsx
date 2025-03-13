@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Animated,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
 import {useAppSelector, useAppDispatch} from '../store/hooks';
 import {toggleFavorite} from '../store/feater/recipeSlice';
 
@@ -70,13 +69,17 @@ const RecipeCard: React.FC<RecipeCardProps> = ({recipe, index, onPress}) => {
           </Text>
           <View style={styles.cardFooter}>
             <View style={styles.footerItem}>
-              <Icon name="time-outline" size={16} color="#666" />
+              <Text style={{fontSize: 16, color: '#666', marginRight: 4}}>
+                ⏱️
+              </Text>
               <Text style={styles.footerText}>
                 {recipe.preparationTime} min
               </Text>
             </View>
             <View style={styles.footerItem}>
-              <Icon name="stats-chart" size={16} color="#DC2626" />
+              <Text style={{fontSize: 16, color: '#DC2626', marginRight: 4}}>
+                📊
+              </Text>
               <Text style={[styles.footerText, {color: '#DC2626'}]}>
                 {recipe.difficulty}
               </Text>
@@ -84,11 +87,13 @@ const RecipeCard: React.FC<RecipeCardProps> = ({recipe, index, onPress}) => {
             <TouchableOpacity
               onPress={handleToggleFavorite}
               style={styles.favoriteButton}>
-              <Icon
-                name={isFavorite ? 'heart' : 'heart-outline'}
-                size={22}
-                color={isFavorite ? '#DC2626' : '#666'}
-              />
+              <Text
+                style={{
+                  fontSize: 22,
+                  color: isFavorite ? '#DC2626' : '#666',
+                }}>
+                {isFavorite ? '❤️' : '🤍'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
